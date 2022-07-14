@@ -8,7 +8,7 @@ distributed shell
 
 ```bsh
 ./configure
-CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build main.go -o build/dstb-shell
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o build/dstb-shell main.go
 ```
 
 ## 运行

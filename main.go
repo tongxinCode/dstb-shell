@@ -25,6 +25,7 @@ var (
 
 	logPath string
 	command string
+	windows bool
 
 	masterIp    string
 	hostsIpPort []string
@@ -39,6 +40,7 @@ func init() {
 
 // 命令行提示的初始化
 func flagInit() {
+	flag.BoolVar(&windows, "w", true, "Whether to connect windows hosts.")
 	flag.StringVar(&command, "c", "echo dstb-shell", "Your command to be executed")
 	flag.StringVar(&logPath, "L", "/", "[/tmp/] determine whether to log, Path e.g ./, Forbidden /")
 	flag.Usage = flagUsage
@@ -72,6 +74,12 @@ func logSettup() {
 		}
 		fileAndStdoutWriter := io.MultiWriter(writers...)
 		log.SetOutput(fileAndStdoutWriter)
+	} else {
+		writers := []io.Writer{
+			os.Stdout,
+		}
+		fileAndStdoutWriter := io.MultiWriter(writers...)
+		log.SetOutput(fileAndStdoutWriter)
 	}
 }
 
@@ -99,10 +107,14 @@ func viperInit() {
 	}
 }
 
-// 处理windows字符集,GBK->UTF8
-func convertByte2String(byte []byte) string {
-	decodeBytes, _ := simplifiedchinese.GBK.NewDecoder().Bytes(byte)
-	return string(decodeBytes)
+// 处理windows字符集,windows:GBK->UTF8,linux:UTF8->UTF8
+func convertByte2String(bytes []byte) string {
+	if windows {
+		decodeBytes, _ := simplifiedchinese.GBK.NewDecoder().Bytes(bytes)
+		return string(decodeBytes)
+	} else {
+		return string(bytes)
+	}
 }
 
 //具有超时停止的的阻塞,命令，毫秒

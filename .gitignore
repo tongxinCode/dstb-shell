@@ -5,3 +5,4 @@
 
 # the executable elf binary
 bin/*
+build/*
