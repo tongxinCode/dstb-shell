@@ -1,0 +1,40 @@
+#!/usr/bin/bash
+
+if test -f /usr/bin/socat
+then
+    echo "socat exists"
+else
+    if test -f ./bin/socat/socat
+    then
+        cp ./bin/socat/socat /usr/bin/socat
+        chmod +x /usr/bin/socat
+        echo "socat doesnot exists but has been copied"
+    else
+        apt-get install socat
+    fi
+fi
+# if test -f /usr/bin/sqlite3
+# then
+#     echo "sqlite3 exists"
+# else
+#     echo "ERR!"
+#     echo "try to install sqlite3"
+#     apt-get install sqlite3
+# fi
+if test -f /usr/bin/openssl
+then
+    echo "openssl exists"
+else
+    echo "ERR!"
+    echo "try to install openssl"
+    apt-get install openssl
+fi
+if test -f ./data/cert
+then
+    echo "certificate path exits"
+else
+    echo "warning"
+    echo "try to mkdir ./data/cert"
+    mkdir ./data/cert
+fi
+echo "Finished!"

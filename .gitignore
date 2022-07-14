@@ -1,0 +1,7 @@
+# the certificate
+*.crt
+*.pem
+*.key
+
+# the executable elf binary
+bin/*
