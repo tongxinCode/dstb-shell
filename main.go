@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/spf13/viper"
@@ -86,15 +87,45 @@ func viperInit() {
 	}
 	masterIp = viper.GetString("master")
 	hostsIpPort = viper.GetStringSlice("hosts")
+	hostsIp = make([]string, len(hostsIpPort))
+	hostsPort = make([]int, len(hostsIpPort))
 	for i := 0; i < len(hostsIpPort); i++ {
-		hostsIp = make([]string, len(hostsIpPort))
-		hostsPort = make([]int, len(hostsIpPort))
 		hostsIp[i] = strings.Split(hostsIpPort[i], ":")[0]
 		hostsPort[i], _ = strconv.Atoi(strings.Split(hostsIpPort[i], ":")[1])
 		if !ipReg.MatchString(hostsIp[i]) {
 			panic(fmt.Errorf("fata error config IP"))
 		}
 	}
+}
+
+//具有超时停止的的阻塞,命令，毫秒
+func execShellTimeout(s string, timeout int) (string, error) {
+	//函数返回一个*Cmd，用于使用给出的参数执行name指定的程序
+	cmd := exec.Command("/bin/bash", "-c", s)
+
+	//读取io.Writer类型的cmd.Stdout，再通过bytes.Buffer(缓冲byte类型的缓冲器)将byte类型转化为string类型(out.String():这是bytes类型提供的接口)
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	// Start starts the specified command but does not wait for it to complete.
+	cmd.Start()
+	done := make(chan error)
+	go func() {
+		done <- cmd.Wait()
+	}()
+	// 设置定时器
+	after := time.After(time.Duration(timeout) * time.Millisecond)
+	// select 本身是阻塞的
+	select {
+	case <-after:
+		cmd.Process.Signal(syscall.SIGINT)
+		// time.Sleep(10 * time.Millisecond)
+		cmd.Process.Kill()
+	case <-done:
+		return stdout.String(), nil
+	}
+	return stdout.String(), fmt.Errorf("time out: %s", stderr.String())
 }
 
 //阻塞式的,执行外部shell命令的函数,等待执行完毕并返回标准输出
@@ -188,13 +219,14 @@ func genCertAll() {
 func execSocat(c string, serverIp string, serverPort int, clientPem string, serverCrt string, wg *sync.WaitGroup) {
 	defer wg.Done()
 	cmd := fmt.Sprintf(`echo "%s" | socat - OPENSSL:%s:%d,cert=%s,cafile=%s`, c, serverIp, serverPort, clientPem, serverCrt)
-	s, err := execShell(cmd)
+	s, err := execShellTimeout(cmd, 3000)
 	// log.Println("Goroutine...")
 	if err != nil {
 		log.Printf("[%s][error]\n", serverIp)
 		log.Println(s)
+		log.Println(err)
 	} else {
-		log.Printf("[%s][good]\n", serverIp)
+		log.Printf("[%s][correct]\n", serverIp)
 		log.Println(s)
 	}
 }
