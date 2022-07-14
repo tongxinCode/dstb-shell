@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/spf13/viper"
+	"golang.org/x/text/encoding/simplifiedchinese"
 )
 
 var (
@@ -98,6 +99,12 @@ func viperInit() {
 	}
 }
 
+// 处理windows字符集,GBK->UTF8
+func convertByte2String(byte []byte) string {
+	decodeBytes, _ := simplifiedchinese.GBK.NewDecoder().Bytes(byte)
+	return string(decodeBytes)
+}
+
 //具有超时停止的的阻塞,命令，毫秒
 func execShellTimeout(s string, timeout int) (string, error) {
 	//函数返回一个*Cmd，用于使用给出的参数执行name指定的程序
@@ -123,9 +130,9 @@ func execShellTimeout(s string, timeout int) (string, error) {
 		// time.Sleep(10 * time.Millisecond)
 		cmd.Process.Kill()
 	case <-done:
-		return stdout.String(), nil
+		return convertByte2String(stdout.Bytes()), nil
 	}
-	return stdout.String(), fmt.Errorf("time out: %s", stderr.String())
+	return convertByte2String(stdout.Bytes()), fmt.Errorf("time out: %s", stderr.String())
 }
 
 //阻塞式的,执行外部shell命令的函数,等待执行完毕并返回标准输出
@@ -234,7 +241,6 @@ func execSocat(c string, serverIp string, serverPort int, clientPem string, serv
 func main() {
 	flagInit()
 	flag.Parse()
-
 	logSettup()
 	viperInit()
 	genCertAll()
