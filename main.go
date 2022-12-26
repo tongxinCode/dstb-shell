@@ -50,7 +50,8 @@ func flagInit() {
 func flagUsage() {
 	fmt.Println("Dstb-shell is a program to run shell command over distributed operation system.")
 	fmt.Println("Its full name is distributed-shell.")
-	fmt.Println("Step1: edit the configure file below this folder.")
+	fmt.Println("Step1: edit the configure file below this folder and")
+	fmt.Println("     : run this program to generate certificates.")
 	fmt.Println("Step2: use the data/hosts_cert**cert_thing** to deploy the socat.")
 	fmt.Println("     : you need to refer to the readme or the introductions.")
 	fmt.Println("Step3: use ./dstb-shell -c `cmd line` [-] to control hosts.")
